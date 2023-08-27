@@ -1,47 +1,47 @@
-#!/bin/bash
-
-# Function to check if a number is prime
-is_prime() {
-    local num=$1
-    if [ $num -le 1 ]; then
-        return 1
-    fi
-    for ((i = 2; i * i <= num; i++)); do
-        if [ $((num % i)) -eq 0 ]; then
-            return 1
+#!/usr/bin/env bash
+check_factor()
+{
+	if [ $# -ne 3 ];
+        then
+                args=("$@")
+                count=0
+                num2=1
+                for a in ${args[*]};
+                do
+                        if [ $count -gt 1 ];
+                        then
+                                num2=$(echo $a*$num2 | bc)
+                        fi
+                        count=$((count + 1))
+                done
+        else
+                num2=$3
         fi
-    done
-    return 0
+
+        num1=$2
+        num=$(echo "$1" | tr ':' '=')
+
+        result=$(echo "if($num2 > $num1) 1 else 0" | bc)
+	        if ((result == 1)); then
+		        numcp=$num1
+		        num1=$num2
+		        num2=$numcp
+                fi
+
+        echo "$num$num1*$num2"
 }
 
-# Check if an input file argument is provided
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <file>"
-    exit 1
+if [ $# -ne 1 ]
+then
+        echo 'Usage: factors <file>'
+        exit 1
+else
+
+        while read i
+        do
+
+                result=$(factor "$i")
+                check_factor $result
+
+        done < "$1"
 fi
-
-input_file="$1"
-
-# Check if the input file exists
-if [ ! -e "$input_file" ]; then
-    echo "Input file '$input_file' not found."
-    exit 1
-fi
-
-# Process each line in the file
-while read -r line; do
-    # Convert the line to a number
-    n=$(echo "$line" | tr -d '\r')
-
-    # Factorize the number into p and q
-    for ((p = 2; p <= n / 2; p++)); do
-        q=$((n / p))
-        if [ $((p * q)) -eq $n ]; then
-            # Check if p and q are prime
-            if is_prime "$p" && is_prime "$q"; then
-                echo "$n=$p*$q"
-                break
-            fi
-        fi
-    done
-done <"$input_file"
