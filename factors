@@ -1,51 +1,47 @@
 #!/usr/bin/env bash
-
-# Function to check if a number is prime
-is_prime() {
-    local num=$1
-    if [ $num -le 1 ]; then
-        return 1
-    fi
-    for ((i = 2; i * i <= num; i++)); do
-        if [ $((num % i)) -eq 0 ]; then
-            return 1
+check_factor()
+{
+	if [ $# -ne 3 ];
+        then
+                args=("$@")
+                count=0
+                num2=1
+                for a in ${args[*]};
+                do
+                        if [ $count -gt 1 ];
+                        then
+                                num2=$(echo $a*$num2 | bc)
+                        fi
+                        count=$((count + 1))
+                done
+        else
+                num2=$3
         fi
-    done
-    return 0
+
+        num1=$2
+        num=$(echo "$1" | tr ':' '=')
+
+        result=$(echo "if($num2 > $num1) 1 else 0" | bc)
+	        if ((result == 1)); then
+		        numcp=$num1
+		        num1=$num2
+		        num2=$numcp
+                fi
+
+        echo "$num$num1*$num2"
 }
 
-# Function to factorize a number and print the factorization
-factorize() {
-    local num=$1
-    local num1
-    local num2
+if [ $# -ne 1 ]
+then
+        echo 'Usage: factors <file>'
+        exit 1
+else
 
-    for ((num1 = 2; num1 <= num; num1++)); do
-        num2=$((num / num1))
-        if [ $((num1 * num2)) -eq $num ]; then
-            if is_prime "$num1" && is_prime "$num2"; then
-                echo "$num=$num1*$num2"
-                return
-            fi
-        fi
-    done
+        while read i
+        do
 
-    # If no prime factorization is found, print the original number
-    echo "$num"
-}
+                result=$(factor "$i")
+                check_factor $result
 
-if [ $# -ne 1 ]; then
-    echo 'Usage: ./factors <file>'
-    exit 1
+        done < "$1"
 fi
-
-input_file="$1"
-
-if [ ! -e "$input_file" ]; then
-    echo "Input file '$input_file' not found."
-    exit 1
-fi
-
-while read -r number; do
-    factorize "$number"
-done < "$input_file"

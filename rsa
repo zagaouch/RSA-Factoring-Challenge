@@ -1,22 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Function to calculate the factorial of a number
-factorial() {
-    if [ $1 -eq 0 ]; then
-        echo 1
-    else
-        local temp=$(factorial $(( $1 - 1 )))
-        echo $(( $1 * $temp ))
+# Function to check if a number is prime
+is_prime() {
+    local num=$1
+    if [ $num -le 1 ]; then
+        return 1
     fi
+    for ((i = 2; i * i <= num; i++)); do
+        if [ $((num % i)) -eq 0 ]; then
+            return 1
+        fi
+    done
+    return 0
 }
 
-# Check if an input file argument is provided
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <input_file>"
+if [ $# -ne 1 ]
+then
+    echo 'Usage: rsa <file>'
     exit 1
 fi
 
-# Check if the input file exists
 input_file="$1"
 
 if [ ! -e "$input_file" ]; then
@@ -24,15 +27,23 @@ if [ ! -e "$input_file" ]; then
     exit 1
 fi
 
-# Read the number from the file
-num=$(cat "$input_file")
+while read -r number; do
+    factors=""
+    
+    for ((p = 2; p <= number / 2; p++)); do
+        q=$((number / p))
+        
+        if [ $((p * q)) -eq $number ]; then
+            if is_prime "$p" && is_prime "$q"; then
+                factors="$number=$p*$q"
+                break
+            fi
+        fi
+    done
+    
+    if [ -z "$factors" ]; then
+        factors="$number (prime)"
+    fi
 
-# Check if the content of the file is a valid number
-if ! [[ "$num" =~ ^[0-9]+$ ]]; then
-    echo "Invalid number found in '$input_file'."
-    exit 1
-fi
-
-# Calculate the factorial and display the result
-result=$(factorial $num)
-echo "$result"
+    echo "$factors"
+done < "$input_file"
