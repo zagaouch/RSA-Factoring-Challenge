@@ -1,8 +1,22 @@
 #!/bin/bash
 
+# Function to check if a number is prime
+is_prime() {
+    local num=$1
+    if [ $num -le 1 ]; then
+        return 1
+    fi
+    for ((i = 2; i * i <= num; i++)); do
+        if [ $((num % i)) -eq 0 ]; then
+            return 1
+        fi
+    done
+    return 0
+}
+
 # Check if an input file argument is provided
 if [ $# -ne 1 ]; then
-    echo "Usage: $0 <input_file>"
+    echo "Usage: $0 <file>"
     exit 1
 fi
 
@@ -14,20 +28,20 @@ if [ ! -e "$input_file" ]; then
     exit 1
 fi
 
-# Loop through each line in the input file
+# Process each line in the file
 while read -r line; do
-    num="$line"
+    # Convert the line to a number
+    n=$(echo "$line" | tr -d '\r')
 
-    # Find the factors of the number
-    factors=""
-    for ((i=2; i<num/2; i++)); do
-        if ((num % i == 0)); then
-            factors+="$i*$((num/i))"
-            break
+    # Factorize the number into p and q
+    for ((p = 2; p <= n / 2; p++)); do
+        q=$((n / p))
+        if [ $((p * q)) -eq $n ]; then
+            # Check if p and q are prime
+            if is_prime "$p" && is_prime "$q"; then
+                echo "$n=$p*$q"
+                break
+            fi
         fi
     done
-
-    # Print the factorization
-    echo "$num=$factors"
-done < "$input_file"
-
+done <"$input_file"
